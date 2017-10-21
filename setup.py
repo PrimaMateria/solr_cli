@@ -7,7 +7,13 @@ except ImportError:
     from distutils.core import setup
 
 
-REQUIRED = ['mysolr>=0.7.1', 'pygments']
+REQUIRED = [
+    'mysolr>=0.7.1',
+    'pygments',
+    'requests_kerberos>=0.11.0',
+    'docopt>=0.6.2'
+]
+
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',

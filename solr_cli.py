@@ -1,10 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-solr_cli
-~~~~~~~~
+Usage:
+  solr_cli [options] [<host>]
+  solr_cli -h | --help
+  solr_cli --version
 
-Command line client for solr.
+Solr command-line client.
+
+Arguments:
+  host  Solr host url
+
+Options:
+  -h --help         Show this screen.
+  --version         Show version.
+  -k --kerberos     User kerberos authentication
 
 """
 import atexit
@@ -15,7 +25,6 @@ import readline
 import signal
 import sys
 import requests
-import argparse
 
 from os.path import expanduser
 from pygments import highlight
@@ -23,8 +32,9 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import JavascriptLexer, XmlLexer
 from urlparse import parse_qs
 from requests_kerberos import HTTPKerberosAuth, OPTIONAL
+from docopt import docopt
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 
 class SolrCLI(object):
@@ -276,12 +286,9 @@ class SolrCLI(object):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--host', help='Solr URL')
-    parser.add_argument('--kerberos', help='Kerberos authentication', action='store_true')
-    args = parser.parse_args()
-    host = args.host
-    kerberos = args.kerberos
+    args = docopt(__doc__, version=__version__)
+    host = args['<host>']
+    kerberos = args['--kerberos']
     SolrCLI(host, kerberos).loop()
     exit(0)
 
