@@ -4,7 +4,7 @@
 solr_cli
 ~~~~~~~~
 
-Command line client for solr. 
+Command line client for solr.
 
 """
 import atexit
@@ -14,13 +14,15 @@ import re
 import readline
 import signal
 import sys
+import requests
+import argparse
 
 from os.path import expanduser
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import JavascriptLexer, XmlLexer
 from urlparse import parse_qs
-
+from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 
 __version__ = '0.2'
 
@@ -33,10 +35,11 @@ class SolrCLI(object):
         'fields'
     )
 
-    def __init__(self, host=None, history_file=expanduser("~/.solr_cli")):
+    def __init__(self, host=None, kerberos=False, history_file=expanduser("~/.solr_cli")):
         self.solr = None
         self.connected = False
         self.host = host
+        self.kerberos = kerberos
         self.history_file = history_file
 
         # Load history file
@@ -70,7 +73,7 @@ class SolrCLI(object):
         response = None
         if state == 0:
             if text:
-                self.matches = [s 
+                self.matches = [s
                                 for s in self.valid_commands
                                 if s and s.startswith(text)]
             else:
@@ -144,7 +147,11 @@ class SolrCLI(object):
         connect http://localhost:8983/solr
         """
         if host:
-            self.solr = mysolr.Solr(host)
+            session = requests.Session()
+            if self.kerberos:
+                session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
+
+            self.solr = mysolr.Solr(host, make_request=session, version=4)
             if self.solr.is_up():
                 self.host = host
                 self.connected = True
@@ -183,7 +190,7 @@ class SolrCLI(object):
     def do_uri(self, uri):
         """uri <params>
 
-        makes a requests to a solr server allowing all paramaters. 
+        makes a requests to a solr server allowing all paramaters.
         'q' must be specified. Example:
 
         uri q=*:*&facet=true&facet.field=price&rows=0
@@ -223,9 +230,9 @@ class SolrCLI(object):
         Delete by query. Examples:
 
         Removes all the index::
-            
+
             delete *:*
-        
+
         Removes documents whose type is book ::
 
             delete type:"book"
@@ -236,7 +243,7 @@ class SolrCLI(object):
                 print response.message
         else:
             print self.do_query.__doc__
- 
+
     def do_optimize(self, line):
         """commit
 
@@ -269,8 +276,13 @@ class SolrCLI(object):
 
 
 def main():
-    host = sys.argv[1] if len(sys.argv) >= 2 else None
-    SolrCLI(host).loop()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', help='Solr URL')
+    parser.add_argument('--kerberos', help='Kerberos authentication', action='store_true')
+    args = parser.parse_args()
+    host = args.host
+    kerberos = args.kerberos
+    SolrCLI(host, kerberos).loop()
     exit(0)
 
 
